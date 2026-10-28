@@ -20,7 +20,7 @@
         }
 
         .modal-overlay {
-            position: fixed; /* Fixed position to overlay entire screen properly */
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -59,28 +59,6 @@
             font-family: Georgia;
         }
   
-        .modal-checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-  
-        .modal-checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-  
-        .modal-checkbox-group label {
-            display: inline;
-            margin: 0;
-            font-size: 13px;
-            color: #333;
-            font-weight: normal;
-            cursor: pointer;
-        }
-  
         .modal-btn {
             width: 100%;
             padding: 12px;
@@ -96,13 +74,6 @@
         }
         .modal-btn:hover {
             background-color: #45a049;
-        }
-  
-        .modal-btn:disabled {
-            background-color: #cccccc;
-            color: #666666;
-            cursor: not-allowed;
-            border-color: #999;
         }
 
         .form-container {
@@ -196,13 +167,13 @@
         }
 
         .toast.success {
-            background-color: #98FB98; /* Green background for success */
+            background-color: #98FB98;
             color: #000000;
             border-color: #1b5e20;
         }
 
         .toast.error {
-            background-color: #c62828; /* Red background for error */
+            background-color: #c62828;
             color: #ffffff;
             border-color: #b71c1c;
         }
@@ -221,7 +192,6 @@
             from { opacity: 1; transform: translate(-50%, -50%); }
             to { opacity: 0; transform: translate(-50%, -40%); }
         }
-    
     </style>
 </head>
 <body>
@@ -231,17 +201,11 @@
       <div class="modal-box">
           <h3>Terms &amp; Agreement</h3>
           <p>Welcome to the <strong>087 IMUS 1</strong> Suggestion Box.</p>
-          <p>• Your submitted suggestion may remain anonymously recorded or you may state your personal identity.</p>
+          <p>• Your submitted suggestion will be recorded as anonymously or you can state your personal information (optional).</p>
           <p>• Your suggestions/feedback/complaint will help us to improve our service.</p>
           <p>• Please refrain from submitting inappropriate, offensive, or sensitive personal information.</p>
           
-          <!-- Checkbox for Terms agreement -->
-          <div class="modal-checkbox-group">
-              <input type="checkbox" id="agreeCheckbox">
-              <label for="agreeCheckbox">I agree to the terms and conditions</label>
-          </div>
-
-          <button class="modal-btn" id="continueBtn" disabled>CONTINUE</button>
+          <button class="modal-btn" id="continueBtn">CONTINUE</button>
       </div>
   </div>
 
@@ -258,7 +222,7 @@
 
           <!-- Input Box 2 -->
           <div class="form-group">
-              <label for="input2">Suggestion/Complain/Feedback:</label>
+              <label for="input2">Suggestion/Complaint/Feedback:</label>
               <textarea id="input2" name="input2" required placeholder="Please, tell us your suggestions/feedback/complaint"></textarea>  
           </div>
 
@@ -286,20 +250,12 @@
     // Modal Control Elements
     const modalOverlay = document.getElementById('modalOverlay');
     const continueBtn = document.getElementById('continueBtn');
-    const agreeCheckbox = document.getElementById('agreeCheckbox');
     const formContainer = document.querySelector('.form-container');
-
-    // Enable/disable Continue button depending on checkbox state
-    agreeCheckbox.addEventListener('change', () => {
-        continueBtn.disabled = !agreeCheckbox.checked;
-    });
 
     // When Continue is clicked, hide modal and display form
     continueBtn.addEventListener('click', () => {
-        if (agreeCheckbox.checked) {
-            modalOverlay.style.display = 'none';
-            formContainer.style.display = 'block';
-        }
+        modalOverlay.style.display = 'none';
+        formContainer.style.display = 'block';
     });
 
     // Helper function to display centered toast message
@@ -309,7 +265,7 @@
 
         setTimeout(() => {
             toastMessage.className = 'toast';
-        }, 3000); // Hides after 3 seconds
+        }, 3000);
     }
 
     form.addEventListener('submit', e => {
@@ -317,7 +273,24 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Submitting...';
 
-        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+        // Create FormData and fix timezone date shifting
+        const formData = new FormData(form);
+        const dateVal = document.getElementById('datePicker').value;
+        
+        if (dateVal) {
+            // Safely parse local date components (YYYY, MM, DD) without UTC shift
+            const [year, month, day] = dateVal.split('-');
+            const localDate = new Date(year, month - 1, day);
+            
+            // Format text cleanly as "Month Day, Year" (e.g., June 7, 2026) 
+            // This forces Google Sheets to treat it strictly as text, preventing timezone bugs.
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const fixedDateString = localDate.toLocaleDateString('en-US', options);
+            
+            formData.set('datePicker', fixedDateString);
+        }
+
+        fetch(scriptURL, { method: 'POST', body: formData })
             .then(response => response.json())
             .then(data => {
                 submitBtn.disabled = false;
