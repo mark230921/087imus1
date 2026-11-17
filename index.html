@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>087 IMUS 1 · Suggestion Box</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f4f5f4;
+            --surface: #ffffff;
+            --ink: #1b1f1d;
+            --muted: #636b67;
+            --line: #dcdfdd;
+            --accent: #0b6b4a;
+            --accent-hover: #095a3e;
+            --accent-ink: #ffffff;
+            --error: #b3261e;
+            --focus: rgba(11, 107, 74, 0.25);
+            --radius: 10px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #121513;
+                --surface: #1b1f1d;
+                --ink: #eceeed;
+                --muted: #9aa29e;
+                --line: #2e3431;
+                --accent: #3fb38a;
+                --accent-hover: #55c69c;
+                --accent-ink: #08140f;
+                --error: #f2b8b5;
+                --focus: rgba(63, 179, 138, 0.3);
+            }
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html { -webkit-text-size-adjust: 100%; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            background: white;
+            color: var(--ink);
+            font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font-size: 15px;
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--surface);
+            border: 2px solid black;
+            border-radius: 14px;
+            padding: 40px 32px 36px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Three-color brand bar (orange / green / red), clipped by the card's rounded corners */
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(
+                to right,
+                #f08a24 0 33.333%,
+                #0a8040 33.333% 66.666%,
+                #e8272a 66.666% 100%
+            );
+        }
+
+        .brand {
+            margin: 0 0 4px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent);
+            letter-spacing: 0.01em;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: 24px;
+            font-weight: 600;
+            line-height: 1.25;
+            letter-spacing: -0.015em;
+        }
+
+        .view[hidden] { display: none; }
+
+        .view.enter { animation: enter 0.3s ease-out; }
+
+        @keyframes enter {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Terms */
+        .terms {
+            margin: 0 0 28px;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 14px;
+            color: var(--muted);
+        }
+
+        .terms li {
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .terms li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.62em;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        /* Form */
+        .field { margin-bottom: 20px; }
+
+        label {
+            font-weight:500;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .hint {
+            font-weight: 400;
+            color: var(--muted);
+        }
+
+        input[type="text"],
+        input[type="date"],
+        textarea {
+            width: 100%;
+            padding: 11px 12px;
+            background: transparent;
+            color: var(--ink);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            font: inherit;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        input::placeholder,
+        textarea::placeholder { color: var(--muted); opacity: 0.8; }
+
+        textarea {
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        input[type="date"] { color-scheme: light dark; }
+
+        input:hover,
+        textarea:hover { border-color: var(--muted); }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--focus);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--accent);
+            color: var(--accent-ink);
+            border: 0;
+            border-radius: var(--radius);
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, opacity 0.15s;
+        }
+
+        .btn:hover { background: var(--accent-hover); }
+
+        .btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--focus);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 28px;
+            max-width: calc(100% - 32px);
+            padding: 12px 18px;
+            background: var(--ink);
+            color: var(--bg);
+            border-radius: var(--radius);
+            font-size: 14px;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, 8px);
+            transition: opacity 0.25s, transform 0.25s;
+            z-index: 100;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        .toast.error {
+            background: var(--error);
+            color: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .toast.error { color: #370b08; }
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 28px 22px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="card">
+        <p style="text-align:center;font-size:30px;color: green;font-weight:800">087 IMUS 1</p>
+
+        <!-- Step 1: Terms -->
+        <section class="view" id="termsView">
+            <h1>Read this before you start</h1>
+            <ul class="terms">
+                <li>Your submission is anonymous. Adding your name is optional.</li>
+                <li>Your suggestions, feedback and concern help us improve our service.</li>
+                <li>Please don't include offensive language or sensitive personal information.</li>
+            </ul>
+            <button class="btn" id="continueBtn" type="button">Agree and continue</button>
+        </section>
+
+        <!-- Step 2: Form -->
+        <section class="view" id="formView" hidden>
+            <h1>Suggestion box</h1>
+            <form id="dataForm">
+                <div class="field">
+                    <label for="input1">Full name <span class="hint">(optional)</span></label>
+                    <input type="text" id="input1" name="input1" autocomplete="name">
+                </div>
+
+                <div class="field">
+                    <label for="input2">Suggestion, concern or feedback</label>
+                    <textarea id="input2" name="input2" required placeholder="Tell us what's on your mind"></textarea>
+                </div>
+
+                <div class="field">
+                    <label for="datePicker">Date of visit</label>
+                    <input type="date" id="datePicker" name="datePicker" required>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Send concern</button>
+            </form>
+        </section>
+    </main>
+
+    <div id="toastMessage" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxKpLwqsW9O61xdx5L5wJsX0Fvx06rVukxZNSJGJmhW2SSPlODHHoyjU5vpNIWuqYGfcw/exec';
+
+    const form = document.getElementById('dataForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const toastMessage = document.getElementById('toastMessage');
+    const termsView = document.getElementById('termsView');
+    const formView = document.getElementById('formView');
+    const continueBtn = document.getElementById('continueBtn');
+    const datePicker = document.getElementById('datePicker');
+
+    // Don't allow visit dates in the future (uses local date, not UTC)
+    const now = new Date();
+    datePicker.max = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0')
+    ].join('-');
+
+    // Terms -> form
+    continueBtn.addEventListener('click', () => {
+        termsView.hidden = true;
+        formView.hidden = false;
+        formView.classList.add('enter');
+    });
+
+    let toastTimer;
+    function showToast(message, type = 'success') {
+        clearTimeout(toastTimer);
+        toastMessage.textContent = message;
+        toastMessage.className = 'toast ' + type + ' show';
+        toastTimer = setTimeout(() => {
+            toastMessage.className = 'toast ' + type;
+        }, 3500);
+    }
+
+    function setSubmitting(isSubmitting) {
+        submitBtn.disabled = isSubmitting;
+        submitBtn.textContent = isSubmitting ? 'Sending…' : 'Send concern';
+    }
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        setSubmitting(true);
+
+        const formData = new FormData(form);
+        const dateVal = datePicker.value;
+
+        if (dateVal) {
+            // Parse local date parts to avoid timezone shifts, and send as
+            // readable text (e.g. "June 7, 2026") so Google Sheets keeps it as text.
+            const [year, month, day] = dateVal.split('-');
+            const localDate = new Date(year, month - 1, day);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            formData.set('datePicker', localDate.toLocaleDateString('en-US', options));
+        }
+
+        fetch(scriptURL, { method: 'POST', body: formData })
+            .then(response => response.json())
+            .then(() => {
+                setSubmitting(false);
+                showToast('Feedback sent. Thank you!', 'success');
+                form.reset();
+            })
+            .catch(error => {
+                setSubmitting(false);
+                showToast("Couldn't send your concern. Please try again.", 'error');
+                console.error('Error!', error.message);
+            });
+    });
+</script>
+
+</body>
+</html>
